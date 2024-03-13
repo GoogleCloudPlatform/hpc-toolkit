@@ -39,6 +39,7 @@ md_toc github examples/README.md | sed -e "s/\s-\s/ * /"
   * [client-google-cloud-storage.yaml](#client-google-cloud-storageyaml--) ![community-badge] ![experimental-badge]
   * [hpc-slurm-gromacs.yaml](#hpc-slurm-gromacsyaml--) ![community-badge] ![experimental-badge]
   * [hpc-slurm-local-ssd.yaml](#hpc-slurm-local-ssdyaml--) ![community-badge] ![experimental-badge]
+  * [hcls-blueprint-v6.yaml](#hcls-blueprint-v6yaml--) ![experimental-badge]
   * [hpc-gke.yaml](#hpc-gkeyaml--) ![community-badge] ![experimental-badge]
   * [ml-gke](#ml-gkeyaml--) ![community-badge] ![experimental-badge]
   * [storage-gke](#storage-gkeyaml--) ![community-badge] ![experimental-badge]
@@ -1134,6 +1135,15 @@ machine communications, for NFS and also for communications between the Slurm
 nodes)
 
 [hpc-slurm-local-ssd.yaml]: ../community/examples/hpc-slurm-local-ssd.yaml
+
+### [hcls-blueprint-v6.yaml]: ![experimental-badge]
+
+This blueprint demonstrates an advanced architecture that can be used to run
+GROMACS with GPUs and CPUs on Google Cloud. For full documentation, refer
+[document].
+
+[document]: ../docs/videos/healthcare-and-life-sciences/README.md
+[hcls-blueprint-v6.yaml]:  ../example/hcls-blueprint-v6.yaml
 
 ### [hpc-gke.yaml] ![community-badge] ![experimental-badge]
 
