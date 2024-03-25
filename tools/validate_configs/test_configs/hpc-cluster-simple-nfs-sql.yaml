@@ -28,6 +28,10 @@ deployment_groups:
   - id: network1
     source: modules/network/vpc
 
+  - source: ./community/modules/network/private-service-access
+    id: ps-connect
+    use: [network1]
+
   - id: homefs
     source: community/modules/file-system/nfs-server
     use: [network1]
@@ -37,7 +41,7 @@ deployment_groups:
 
   - id: slurm-sql
     source: community/modules/database/slurm-cloudsql-federation
-    use: [network1]
+    use: [network1, ps-connect]
     settings:
       sql_instance_name: slurm-sql8
       tier: "db-f1-micro"
