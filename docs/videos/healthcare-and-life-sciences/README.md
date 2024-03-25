@@ -1,6 +1,10 @@
 # Healthcare and Life Science Blueprint
 
-The Healthcare and Life Science (HCLS) [blueprint](./hcls-blueprint.yaml) in
+> [!NOTE]
+> This document uses SlurmGCP v6 version of hcls blueprint. If you want to
+> use SlurmGCP v5 version, please refer [blueprint](./hcls-blueprint.yaml).
+
+The Healthcare and Life Science (HCLS) [blueprint](../example/hcls-blueprint-v6.yaml) in
 this folder captures an advanced architecture that can be used to run GROMACS
 with GPUs or CPUs on Google Cloud.
 
@@ -111,7 +115,7 @@ storage intact and b) you can build software before you deploy your cluster.
    the cloud buckets being destroyed, it is recommended you run:
 
    ```bash
-   ./ghpc create docs/videos/healthcare-and-life-sciences/hcls-blueprint.yaml -w --vars project_id=<project> --vars bucket_force_delete=true
+   ./ghpc create example/hcls-blueprint-v6.yaml -w --vars project_id=<project> --vars bucket_force_delete=true
    ```
 
    The `bucket_force_delete` variable makes it easier to tear down the
@@ -127,7 +131,7 @@ storage intact and b) you can build software before you deploy your cluster.
    Call the following ghpc command to deploy the the hcls blueprint.
 
    ```bash
-   ./ghpc deploy hcls-01
+   ./ghpc deploy hcls-cluster-v6
    ```
 
    This will prompt you to **display**, **apply**, **stop**, or **continue**
@@ -155,19 +159,19 @@ storage intact and b) you can build software before you deploy your cluster.
 
    This step will create a storage bucket for depositing software. The bucket
    will have the prefix `hcls-user-provided-software` followed by a the
-   deployment name (e.g. `hcls-01`) and a random suffix, for example
-   `hcls-user-provided-software-hcls-01-34c8749a`.
+   deployment name (e.g. `hcls-cluster-v6`) and a random suffix, for example
+   `hcls-user-provided-software-hcls-cluster-v6-34c8749a`.
 
    Here are two ways to locate the bucket name:
 
    1. At the end of the `setup` deployment, ghpc should output a line
       `Outputs:`. Under that there should be a line similar to
-      `gcs_bucket_path_bucket-software = "gs://hcls-user-provided-software-hcls-01-84d0b51e"`,
+      `gcs_bucket_path_bucket-software = "gs://hcls-user-provided-software-hcls-cluster-v6-84d0b51e"`,
       the bucket name is located within the quotes after `gs://`
    1. On the GCP Cloud Console, you can navigate to Cloud Storage -> Buckets and
       assuming you have not created two deployments with the same name, there
       should only be one bucket with a name like
-      `hcls-user-provided-software-hcls-01-34c8749a`
+      `hcls-user-provided-software-hcls-cluster-v6-34c8749a`
 
    Copy this bucket name for the next step.
 
@@ -246,7 +250,7 @@ destroyed first. You can use the following commands to destroy the deployment.
 > associated costs.
 
 ```bash
-./ghpc destroy hcls-01 --auto-approve
+./ghpc destroy hcls-cluster-v6 --auto-approve
 ```
 
 > [!NOTE]
@@ -331,7 +335,7 @@ usage, before the computational VMs are deployed.
    If you refresh the
    [VM instances page](https://console.cloud.google.com/compute/instances) you
    will see an `a2-highgpu-1g` machine that has been auto-scaled up to run this
-   job. It will have a name like `hcls01-gpu-ghpc-0`.
+   job. It will have a name like `hclsclusterv6-gpu-ghpc-0`.
 
    Once the job is in the running state you can track progress with the
    following command:
