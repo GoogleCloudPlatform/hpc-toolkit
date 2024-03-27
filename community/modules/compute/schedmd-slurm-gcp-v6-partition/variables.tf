@@ -189,10 +189,18 @@ variable "nodeset_dyn" {
 # tflint-ignore: terraform_unused_declarations
 variable "network_storage" {
   description = "DEPRECATED"
-  type        = any
-  default     = null
+  type = list(object({
+    server_ip             = string,
+    remote_mount          = string,
+    local_mount           = string,
+    fs_type               = string,
+    mount_options         = string,
+    client_install_runner = map(string)
+    mount_runner          = map(string)
+  }))
+  default = []
   validation {
-    condition     = var.network_storage == null
+    condition     = length(var.network_storage) == 0
     error_message = "network_storage in partition module is deprecated and should be removed."
   }
 }
