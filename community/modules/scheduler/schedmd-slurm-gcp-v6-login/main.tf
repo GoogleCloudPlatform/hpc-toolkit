@@ -35,6 +35,7 @@ locals {
     }
   ]
 
+  public_access_config = [{ nat_ip = null, network_tier = "STANDARD" }]
 
   login_node = {
     name_prefix      = var.name_prefix
@@ -48,7 +49,7 @@ locals {
     disable_smt    = var.disable_smt
 
     enable_confidential_vm   = var.enable_confidential_vm
-    enable_public_ip         = !var.disable_login_public_ips
+    access_config            = var.disable_login_public_ips ? [] : local.public_access_config
     enable_oslogin           = var.enable_oslogin
     enable_shielded_vm       = var.enable_shielded_vm
     shielded_instance_config = var.shielded_instance_config
