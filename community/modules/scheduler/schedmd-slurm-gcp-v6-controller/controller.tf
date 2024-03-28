@@ -108,9 +108,7 @@ module "slurm_controller_instance" {
   zone                = var.zone
   metadata            = var.metadata
 
-  labels = merge(local.labels, {
-    slurm_files_checksum = module.slurm_files.checksum
-  })
+  labels = merge(local.labels, local.files_cs_labels)
 
   depends_on = [
     # Ensure nodes are destroyed before controller is
