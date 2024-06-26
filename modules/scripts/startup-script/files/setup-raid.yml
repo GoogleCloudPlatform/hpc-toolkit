@@ -1,0 +1,83 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Configure local SSDs
+  become: true
+  hosts: localhost
+  vars:
+    DST_MNT: "/mnt/localssd"
+    bashrc: "{{ '/etc/bashrc' if ansible_facts['os_family'] == 'RedHat' else '/etc/bash.bashrc' }}"
+    array_dev: "/dev/md0"
+    mode: 755
+  tasks:
+  - name: Check if DST_MNT exists
+    stat:
+      path: "{{ DST_MNT }}"
+    register: dst_mnt_exists
+
+  - name: Check if {{ array_dev }} exists
+    stat:
+      path: "{{ array_dev }}"
+    register: array_dev_exists
+
+  - name: Exit if DST_MNT exists
+    fail:
+      msg: "{{ DST_MNT }} already exists. Canceling."
+    when: dst_mnt_exists.stat.exists
+
+  - name: Exit if {{ array_dev }} exists
+    fail:
+      msg: "{{ array_dev }} already exists. Canceling."
+    when: array_dev_exists.stat.exists
+
+  - name: Install mdadm
+    package:
+      name: mdadm
+      state: present
+
+  - name: Get number of devices
+    shell: nvme list | { grep nvme_ || test $? = 1; }  | { grep -v nvme_card-pd || test $? = 1; } | awk '{print $1}' | wc -l
+    register: nvme_device_count
+
+  - name: Get list of devices
+    shell: nvme list | { grep nvme_ || test $? = 1; }  | { grep -v nvme_card-pd || test $? = 1; } | awk '{print $1}' | paste -sd ' '
+    register: nvme_device_list
+
+  - name: Exit if less than 2 local ssd
+    meta: end_play
+    when: nvme_device_count.stdout < "2"
+
+  - name: Create RAID-0 array
+    command: mdadm --create /dev/md0 --level=0 --raid-devices={{ nvme_device_count.stdout }} {{ nvme_device_list.stdout }}
+
+  - name: Create ext4 filesystem
+    filesystem:
+      fstype: ext4
+      device: /dev/md0
+
+  - name: Create mount point
+    file:
+      path: "{{ DST_MNT }}"
+      state: directory
+      mode: "{{ mode }}"
+
+  - name: Mount RAID array
+    ansible.posix.mount:
+      src: /dev/md0
+      path: "{{ DST_MNT }}"
+      fstype: ext4
+      opts: discard,defaults,nofail
+      state: mounted
