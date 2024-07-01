@@ -32,25 +32,25 @@ fi
 echo "Deleting compute nodes"
 node_filter="labels.slurm_cluster_name=${cluster_name} AND labels.slurm_instance_role=compute"
 while true; do
-	nodes=$(gcloud compute instances list --project "${project}" --format="value(selfLink)" --filter="${node_filter}" --limit=10 | paste -sd " " -)
+	nodes=$(gcloud compute instances list --project "${project}" --format="value(selfLink)" --filter="${node_filter}" --limit=16 | paste -sd " " -)
 	if [[ -z "${nodes}" ]]; then
 		break
 	fi
 	# The lack of quotes is intentional and causes each new space-separated "word" to
 	# be treated as independent arguments. See PR#2523
 	# shellcheck disable=SC2086
-	gcloud compute instances delete --quiet ${nodes}
+	gcloud compute instances delete --quiet ${nodes} || echo "delete failed, retrying"
 done
 
 echo "Deleting resource policies"
 policies_filter="name:${cluster_name}-*"
 while true; do
-	policies=$(gcloud compute resource-policies list --project "${project}" --format="value(selfLink)" --filter="${policies_filter}" --limit=10 | paste -sd " " -)
+	policies=$(gcloud compute resource-policies list --project "${project}" --format="value(selfLink)" --filter="${policies_filter}" --limit=16 | paste -sd " " -)
 	if [[ -z "${policies}" ]]; then
 		break
 	fi
 	# The lack of quotes is intentional and causes each new space-separated "word" to
 	# be treated as independent arguments. See PR#2523
 	# shellcheck disable=SC2086
-	gcloud compute resource-policies delete --quiet ${policies}
+	gcloud compute resource-policies delete --quiet ${policies} || echo "delete failed, retrying"
 done
