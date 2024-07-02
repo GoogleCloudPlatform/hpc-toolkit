@@ -126,6 +126,12 @@ variable "install_docker" {
   nullable    = false
 }
 
+variable "setup_raid" {
+  description = "Set up RAID0 for existing local ssds."
+  type        = bool
+  default     = false
+}
+
 variable "install_cloud_ops_agent" {
   description = "Warning: Consider using `install_stackdriver_agent` for better performance. Run Google Ops Agent installation script if set to true."
   type        = bool

@@ -98,8 +98,16 @@ locals {
     },
   ]
 
+  raid_setup = !var.setup_raid ? [] : [
+    {
+      type        = "ansible-local"
+      destination = "setup-raid.yml"
+      content     = file("${path.module}/files/setup-raid.yml")
+    },
+  ]
+
   supplied_ansible_runners = anytrue([for r in var.runners : r.type == "ansible-local"])
-  has_ansible_runners      = anytrue([local.supplied_ansible_runners, local.configure_ssh, var.install_docker])
+  has_ansible_runners      = anytrue([local.supplied_ansible_runners, local.configure_ssh, var.install_docker, var.setup_raid])
   install_ansible          = coalesce(var.install_ansible, local.has_ansible_runners)
   ansible_installer = local.install_ansible ? [{
     type        = "shell"
@@ -115,6 +123,7 @@ locals {
     local.ansible_installer,
     local.configure_ssh_runners,
     local.docker_runner,
+    local.raid_setup,
     var.runners
   )
 
