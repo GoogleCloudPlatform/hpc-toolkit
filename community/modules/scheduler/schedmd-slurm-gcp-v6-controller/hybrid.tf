@@ -23,21 +23,22 @@ resource "local_file" "hybrid_install" {
 set -e
 
 OUT_DIR="${local.output_dir}"
-SCRIPTS_DIR="${module.slurm_files.scripts_dir}"
 DEVEL_ZIP="${module.slurm_files.compute_devel_zip}"
 export SLURM_CONFIG_YAML="$OUT_DIR/config.yaml"
 cd "$OUT_DIR"
-echo "Installing dependencies"
-pip install -r "$SCRIPTS_DIR/requirements.txt" > pip_install.log 2>&1
-echo "Generating config files"
-python3 "$SCRIPTS_DIR/setup.py" --hybrid --bucket "${module.slurm_files.slurm_bucket_path}"
 echo "Extracting scripts"
 mkdir -p scripts
-unzip -o slurm-gcp-devel.zip -d scripts > /dev/null
+unzip -o "$DEVEL_ZIP" -d scripts > /dev/null
 #fix the timestamps
 find scripts -exec touch {} +
+echo "Installing dependencies"
+#A venv keeps the host python untouched and works under PEP 668.
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/requirements.txt > pip_install.log 2>&1
+echo "Generating config files"
+.venv/bin/python3 scripts/setup.py --hybrid --bucket "${module.slurm_files.slurm_bucket_path}"
+rm -rf .venv
 mv config.yaml .config.hash scripts/
-cp "$SCRIPTS_DIR/requirements.txt" scripts/
 chmod -R 700 scripts
 echo "Generating config.tgz"
 echo "Merge the conf files with your own conf files (integrate cloud_gres.conf into gres.conf and cloud_topology.conf into topology.conf) and move the files in the scripts directory to what you specified in the install_dir" > README

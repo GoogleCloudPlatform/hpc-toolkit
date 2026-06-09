@@ -249,6 +249,7 @@ locals {
     "tpu.py",
     "util.py",
     "watch_delete_vm_op.py",
+    "requirements.txt",
   ]
 }
 
