@@ -54,6 +54,10 @@ trap cleanup_cb SIGTERM SIGINT
 MAX_RETRIES=3
 RETRY_DELAY=300
 ATTEMPT=1
+ACCUMULATED_EXCLUDE_ZONES=""
+if [ -f "/workspace/job.yaml" ]; then
+	ACCUMULATED_EXCLUDE_ZONES=$(python3 tools/cloud-build/update_job_exclude_zones.py --extract --file /workspace/job.yaml 2>/dev/null || true)
+fi
 
 while true; do
 	echo "=== ATTEMPT $ATTEMPT: Submitting Kueue Job ==="
@@ -109,6 +113,27 @@ while true; do
 	if [ $ATTEMPT -ge $MAX_RETRIES ]; then
 		echo "ERROR: Job failed to find zone capacity after $MAX_RETRIES attempts." >&2
 		exit 1
+	fi
+
+	# Dynamically extract the failed zone from the job logs if failure was due to capacity exhaustion
+	FAILED_ZONE=$(sed -n 's/.*resource exhausted: not enough resources available to fulfill the request in \([a-z0-9-]*\).*/\1/p' /workspace/job_logs.txt | tail -n 1 || true)
+	if [ -z "$FAILED_ZONE" ]; then
+		# Only fall back to deployed zone if the logs confirm a VM capacity/stockout error
+		if grep -qE "ZONE_RESOURCE_POOL_EXHAUSTED|does not have enough resources available" /workspace/job_logs.txt; then
+			FAILED_ZONE=$(sed -n 's/.*Deploying in ZONE: \([a-z0-9-]*\).*/\1/p' /workspace/job_logs.txt | tail -n 1 || true)
+		fi
+	fi
+
+	if [ -n "$FAILED_ZONE" ] && [ -f "/workspace/job.yaml" ]; then
+		echo "INFO: Detected capacity/resource exhaustion in zone: ${FAILED_ZONE}"
+		if [ -z "$ACCUMULATED_EXCLUDE_ZONES" ]; then
+			ACCUMULATED_EXCLUDE_ZONES="${FAILED_ZONE}"
+		elif [[ ! " ${ACCUMULATED_EXCLUDE_ZONES} " == *" ${FAILED_ZONE} "* ]]; then
+			ACCUMULATED_EXCLUDE_ZONES="${ACCUMULATED_EXCLUDE_ZONES} ${FAILED_ZONE}"
+		fi
+
+		echo "INFO: Injecting EXCLUDE_ZONES='${ACCUMULATED_EXCLUDE_ZONES}' into /workspace/job.yaml for attempt $((ATTEMPT + 1))..."
+		python3 tools/cloud-build/update_job_exclude_zones.py --inject --file /workspace/job.yaml --zones "$ACCUMULATED_EXCLUDE_ZONES"
 	fi
 
 	sleep $RETRY_DELAY
